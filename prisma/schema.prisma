@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = ("DATABASE_URL")
+}
+
+// Role untuk User
+enum Role {
+  ADMIN
+  SELLER
+}
+
+//User: Hanya untuk penjual dan admin
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  password String
+  role Role @default(SELLER)
+  store Store? //Satu user hanya boleh memiliki satu store
+  createdAt DateTime @default(now())
+}
+
+//Store: Management status operasional toko
+model Store {
+  id String @id @default(cuid())
+  name String //Nama toko
+  description String?
+  isOpen Boolean @default(true) //Status buka/tutup toko
+  address String
+  userId String @unique
+  user User @relation(fields: [userId], references: [id])
+  product Product[]
+  createdAt DateTime @default(now())
+}
+
+// Product: Katalog barang UMKM
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  stock       Int      @default(0)
+  imageUrl    String?
+  category    String
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+// Order: Dirancang untuk Guest Checkout (Tanpa Akun Pembeli)
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique // Misal: BSR-2024-0001
+  
+  // Data Pembeli (Input manual saat checkout)
+  customerName  String
+  customerWA    String      // Nomor WhatsApp untuk notifikasi
+  customerBlok  String      // Alamat rumah di BSR
+  isResident    Boolean     @default(true) // Untuk logic ongkir Rp0
+  
+  totalAmount   Float
+  status        String      @default("PENDING") // PENDING, PAID, CANCELLED, DELIVERED
+  paymentMethod String      // QRIS, COD, TRANSFER
+  
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+}
+
+// Detail item yang dibeli (Snapshot harga saat dibeli)
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  name      String  // Nama produk saat dibeli
+  price     Float   // Harga saat dibeli (agar jika harga naik, data lama tetap)
+  quantity  Int
+}

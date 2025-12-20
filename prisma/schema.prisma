@@ -1,17 +1,12 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = ("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 // Role untuk User
@@ -20,28 +15,28 @@ enum Role {
   SELLER
 }
 
-//User: Hanya untuk penjual dan admin
+// User: Hanya untuk Penjual dan Admin
 model User {
-  id String @id @default(cuid())
-  name String
-  email String @unique
-  password String
-  role Role @default(SELLER)
-  store Store? //Satu user hanya boleh memiliki satu store
-  createdAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  role          Role     @default(SELLER)
+  store         Store?   // Satu user (penjual) punya satu toko
+  createdAt     DateTime @default(now())
 }
 
-//Store: Management status operasional toko
+// Store: Manajemen status operasional toko
 model Store {
-  id String @id @default(cuid())
-  name String //Nama toko
+  id          String    @id @default(cuid())
+  name        String    // Nama Toko (misal: Dapur Bu RT)
   description String?
-  isOpen Boolean @default(true) //Status buka/tutup toko
-  address String
-  userId String @unique
-  user User @relation(fields: [userId], references: [id])
-  product Product[]
-  createdAt DateTime @default(now())
+  isOpen      Boolean   @default(true) // Fitur Buka/Tutup Toko
+  address     String    // Alamat Blok di BSR
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
+  products    Product[]
+  createdAt   DateTime  @default(now())
 }
 
 // Product: Katalog barang UMKM
